@@ -1,0 +1,83 @@
+package todowebservice;
+
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
+
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+
+public class TodoWebService {
+
+    public static void main(String[] args) {
+
+        try {
+
+            // Create server on port 8007
+            HttpServer server = HttpServer.create(new InetSocketAddress(8007), 0);
+
+            // Create endpoint
+            server.createContext("/todo", new TodoHandler());
+
+            // Start server
+            server.start();
+
+            System.out.println("Server running at http://localhost:8007/todo");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Handler class
+    static class TodoHandler implements HttpHandler {
+
+        @Override
+        public void handle(HttpExchange exchange) {
+
+            try {
+
+                // Example URL:
+                // http://localhost:8007/todo?task=Assignment&status=completed&priority=high
+
+                String query = exchange.getRequestURI().getQuery();
+
+                String[] params = query.split("&");
+
+                String task = params[0].split("=")[1];
+                String status = params[1].split("=")[1];
+                String priority = params[2].split("=")[1];
+
+                String message;
+
+                // Check task status
+                if (status.equalsIgnoreCase("completed")) {
+                    message = "Task Finished";
+                } else {
+                    message = "Task Pending";
+                }
+
+                // Response
+                String response =
+                        "Task : " + task +
+                        "\nStatus : " + status +
+                        "\nPriority : " + priority +
+                        "\nMessage : " + message;
+
+                // Send response
+                exchange.sendResponseHeaders(200, response.length());
+
+                OutputStream os = exchange.getResponseBody();
+
+                os.write(response.getBytes());
+
+                os.close();
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
+
+///http://localhost:8007/todo?task=Assignment&status=completed&priority=high
